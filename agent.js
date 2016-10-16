@@ -71,6 +71,29 @@ function queueList(length) {
     return list;
 }
 
+function search(n1, n2, visited, path, adj) {
+    visited.push(n1);
+
+    if (n1 == n2) {
+        path.push(n1);
+        return true;
+    }
+
+    nbr = adj[n1];
+    for (var n in nbr) {
+        if ($.inArray(nbr[n], visited) >= 0) {
+            continue;
+        }
+
+        if (search(nbr[n], n2, visited, path, adj)) {
+            path.push(n1);
+            return true;
+        }
+    }
+
+    return false;
+}
+
 var styles = [
     {
         "elementType": "geometry",
