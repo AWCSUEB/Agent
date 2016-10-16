@@ -1,0 +1,56 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+#unit {
+    display: table;
+    height: 100%;
+    width: 100%
+}
+#top {
+    height: 75%
+}
+#bottom {
+    height: 25%
+}
+#map {
+    height: 100%;
+    width: 75%;
+    float: left;
+}
+#queue {
+    width: 25%;
+    float: left;
+}
+#room {
+    width: 25%;
+    float: left;
+}
+#status {
+    width: 75%;
+    height: 100%;
+    float: left;
+}
+#buttons {
+    width: 25%;
+    height: 25%;
+    float: left;
+}
+#statustext {
+    width: 99%;
+    height: 95%;
+    margin: 5px;
+}
+.table {
+    display: table;
+    width: 100%;
+}
+.row {
+    display: table-row;
+}
+.cell {
+    display: table-cell;
+    margin: 5px;
+    text-align: center;
+}

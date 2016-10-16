@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Map</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="agent.css">
+    <script src="http://code.jquery.com/jquery-3.1.1.min.js"></script>
+</head>
+<body>
+<div id="top">
+    <div id="map"></div>
+    <div id="queue" class="table"></div>
+    <div id="room" class="table">Players</div>
+</div>
+<div id="bottom">
+    <div id="status"><textarea id="statustext"></textarea></div>
+    <div id="buttons" class="table">
+        <div class="row">
+            <div class="cell">Selected Route: </div><div id="currentRoute" class="cell"></div>
+        </div>
+        <div class="row">
+            <div class="cell">
+                <input id="ready" type="button" value="Ready" disabled><br/>
+                <input id="confirm" type="button" value="Confirm" disabled><br/>
+                <input id="refresh" type="button" value="Refresh" disabled><br/>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var map;
+    var lines = {};
+    var labels = {};
+    var markers = {};
+    var bounds = undefined;
+
+    function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+            //center: {lat: 37.09024, lng: -95.712891},
+            //zoom: 5,
+            disableDefaultUI: true,
+            disableDoubleClickZoom: true,
+            draggable: false,
+            keyboardShortcuts: false,
+            scrollwheel: false,
+            mapTypeControl: false,
+            styles: styles
+        });
+
+        bounds = new google.maps.LatLngBounds();
+
+        for (var key in ports) {
+            var obj = ports[key];
+            addMarker(obj, key);
+            bounds.extend(obj);
+        }
+
+        map.fitBounds(bounds);
+        map.panToBounds(bounds);
+    }
+
+    function center(c1, c2) {
+        return new google.maps.LatLng({lat: (c1.lat + c2.lat) / 2, lng: (c1.lng + c2.lng) / 2});
+    }
+
+    function hideOtherRoutesByLabel(label) {
+        for (var i in labels) {
+            if (labels[i] != label && !labels[i].line.hold) {
+                labels[i].setMap(null);
+                labels[i].line.setMap(null);
+            }
+        }
+    }
+
+    function showAllRoutes() {
+        for (var i in labels) {
+            labels[i].setMap(map);
+            labels[i].line.setMap(map);
+        }
+    }
+
+    function hideOtherRoutesByMarker(marker) {
+        for (var i in labels) {
+            var c1 = labels[i].route.c1;
+            var c2 = labels[i].route.c2;
+            if (c1 != marker.name && c2 != marker.name && !labels[i].line.hold) {
+                labels[i].setMap(null);
+                labels[i].line.setMap(null);
+            }
+        }
+    }
+
+    function clearHolds() {
+        for (var i in labels) {
+            labels[i].line.hold = false;
+            labels[i].line.setOptions({strokeColor: labels[i].line.origColor});
+            labels[i].setOptions({fontColor: labels[i].origColor});
+        }
+    }
+
+    function clearMarkerAnimations(ignoreList) {
+        var markerNames = Object.keys(markers);
+
+        for (var i in markerNames) {
+            // Problem resetting bounce on an already bouncing animation so just ignore setting it again
+            if ($.inArray(markerNames[i], ignoreList) >= 0) {
+                continue;
+            }
+            markers[markerNames[i]].setAnimation(null);
+        }
+    }
+
+    function addMarker(position, name) {
+        var marker = new google.maps.Marker({
+            position: position,
+            map: map,
+            name: name,
+            icon: "http://maps.google.com/mapfiles/marker" + name + ".png"
+        });
+        markers[name] = marker;
+
+        google.maps.event.addListener(marker, 'mouseover', function() {
+            hideOtherRoutesByMarker(this);
+        });
+
+        google.maps.event.addListener(marker, 'mouseout', function() {
+            showAllRoutes();
+        });
+    }
+
+    function addLine(routekey, route, cb, style) {
+        var coords = [route.coord1, route.coord2];
+        var line = new google.maps.Polyline({
+            path: coords,
+            strokeColor: style.color,
+            strokeWeight: style.weight,
+            map: map,
+            zIndex: 0,
+            origColor: style.color,
+            hold: false
+        });
+        lines[routekey] = line;
+
+        var label = new MapLabel({
+            position: center(coords[0], coords[1]),
+            text: "test",
+            map: map,
+            fontColor: style.color,
+            fontSize: 24,
+            zIndex: 10000,
+            line: line,
+            route: route,
+            origColor: style.color
+        });
+        labels[routekey] = label;
+
+        google.maps.event.addListener(line, 'click', cb(label, routekey));
+        google.maps.event.addListener(label, 'click', cb(label, routekey));
+        google.maps.event.addListener(label, 'mouseover', function() {
+            hideOtherRoutesByLabel(this);
+        });
+        google.maps.event.addListener(label, 'mouseout', function() {
+            showAllRoutes();
+        });
+    }
+
+    function clearLines() {
+        var i;
+
+        for (i in labels) {
+            labels[i].setMap(null);
+            delete labels[i];
+        }
+        for (i in lines) {
+            lines[i].setMap(null);
+            delete lines[i];
+        }
+    }
+
+    function setContext(c1, c2) {
+        clearMarkerAnimations([c1, c2]);
+        clearHolds();
+        markers[c1].setAnimation(google.maps.Animation.BOUNCE);
+        markers[c2].setAnimation(google.maps.Animation.BOUNCE);
+    }
+
+    function reset() {
+        clearLines();
+        initMap();
+        markers = [];
+        agentid = undefined;
+        lasterrcount = 0;
+        currentGameState = "Unknown";
+    }
+
+    function refresh() {
+        if (currentGameState != "Running") {
+            return;
+        }
+
+        $.ajax('http://localhost:3000/agents/', {
+            method: "GET",
+            data: {}
+        }).done(function(data, status, xqr) {
+
+        });
+
+        $.ajax('http://localhost:3000/customers/', {
+            method: "GET",
+            data: {}
+        }).done(function(data, status, xqr) {
+            $("#queue").empty();
+
+            $("#queue").append("<div class='row'>");
+            $("#queue").append("<div class='cell'>Route</div>");
+            $("#queue").append("<div class='cell'>Your Route</div>");
+            $("#queue").append("<div class='cell'>Best Route</div>");
+            $("#queue").append("</div>");
+
+            for (var i in data) {
+                $("#queue").append("<div class='row'>");
+                $("#queue").append("<div class='cell' onclick='setContext(\"" + i[0] + "\", \"" + i[1] + "\")'><a href='#" + i + "'>" + i[0] + " to " + i[1] + "</a></div>");
+                $("#queue").append("<div class='cell'>$999</div>");
+                $("#queue").append("<div class='cell'>$999</div>");
+                $("#queue").append("</div>");
+            }
+        });
+
+        $.ajax('http://localhost:3000/routes/', {
+            method: "GET",
+            data: {}
+        }).done(function(data, status, xqr) {
+            clearLines();
+            var step = 0;
+
+            for (var i in data) {
+                addLine(i, data[i][0], function (label, val) {
+                    return function () {
+                        if (label.line.hold) {
+                            label.line.hold = false;
+                            label.line.setOptions({strokeColor: label.line.origColor});
+                            label.setOptions({fontColor: label.origColor});
+                        } else {
+                            label.line.hold = true;
+                            label.line.setOptions({strokeColor: "#FFFFFF"});
+                            label.setOptions({fontColor: "#000000"});
+                        }
+                    };
+                }, {color: rainbow(listsize, step), weight: 5});
+                step = step + 1;
+            }
+        });
+    }
+</script>
+<script src="agent.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyADALZRj35bv79jiIjJyS_ZneBbDncXiXY&callback=initMap"></script>
+<script src="maplabel.js"></script>
+<script src="rainbow.js"></script>
+<script>
+    var listsize = 24;
+    //var list = queueList(listsize);
+    //var step = 0;
+    var agentid = undefined;
+    var lasterrcount = 0;
+    var previousGameState = "Unknown";
+    var currentGameState = "Unknown";
+    var timer = 0;
+
+    function addStatusText(text) {
+        $("#statustext").val(function(i, val) {
+            console.log(text);
+            return val + text + "\n";
+        });
+        document.getElementById("statustext").scrollTop = document.getElementById("statustext").scrollHeight;
+    }
+
+    /*for (var i in list)
+    {
+        addLine(i, list[i], function(label, val) {
+            return function() {
+                //alert(val);
+                if (label.line.hold) {
+                    label.line.hold = false;
+                    label.line.setOptions({strokeColor: label.line.origColor});
+                    label.setOptions({fontColor: label.origColor});
+                } else {
+                    label.line.hold = true;
+                    label.line.setOptions({strokeColor: "#FFFFFF"});
+                    label.setOptions({fontColor: "#000000"});
+                }
+            };
+        }, {color: rainbow(listsize, step), weight: 5});
+        step = step + 1;
+    }*/
+
+    /*var custlist = queueList(3);
+
+    $("#queue").append("<div class='row'>");
+    $("#queue").append("<div class='cell'>Route</div>");
+    $("#queue").append("<div class='cell'>Your Route</div>");
+    $("#queue").append("<div class='cell'>Best Route</div>");
+    $("#queue").append("</div>");
+
+    for (var i in custlist) {
+        $("#queue").append("<div class='row'>");
+        $("#queue").append("<div class='cell' onclick='setContext(\"" + custlist[i].c1 + "\", \"" + custlist[i].c2 + "\")'><a href='#" + i + "'>" + custlist[i].c1 + " to " + custlist[i].c2 + "</a></div>");
+        $("#queue").append("<div class='cell'>$999</div>");
+        $("#queue").append("<div class='cell'>$999</div>");
+        $("#queue").append("</div>");
+    }*/
+
+    $(window).resize(function(){
+        google.maps.event.trigger(map, 'resize');
+        map.setZoom(map.getZoom());
+        map.fitBounds(bounds);
+    });
+
+    $("#ready").click(function(e) {
+        if (agentid) {
+            $.ajax('http://localhost:3000/agents/' + agentid + '/ready', {
+                method: "PUT",
+                data: {}
+            }).done(function (data, status, xqr) {
+                console.log("Agent Ready");
+            });
+        }
+    });
+
+    $("#refresh").click(function(e) {
+        refresh();
+    });
+
+    function finishedTest() {
+       if (currentGameState != "NotReady") {
+           return;
+       }
+
+       if (currentGameState != previousGameState) {
+           clearLines();
+           $("#ready").removeAttr("disabled");
+           $("#confirm").attr("disabled", "disabled");
+           $("#refresh").attr("disabled", "disabled");
+       }
+    }
+
+    function readyTest() {
+        if (currentGameState != "Ready") {
+            return;
+        }
+
+        $("#ready").removeAttr("disabled");
+    }
+
+    function runningTest() {
+        if (currentGameState != "Running") {
+            return;
+        }
+
+        if (currentGameState != previousGameState && Object.keys(lines).length == 0) {
+            refresh();
+            $("#confirm").removeAttr("disabled");
+            $("#refresh").removeAttr("disabled");
+        }
+    }
+
+    function disconnectedTest() {
+       if (currentGameState != "Disconnected") {
+           return;
+       }
+    }
+
+    function connectTest() {
+        if (agentid) {
+            $.ajax('http://localhost:3000/agents/' + agentid + '/ping', {
+                method: "PUT",
+                data: {},
+                timeout: 900
+            }).done(function(data, status, xqr) {
+                if (currentGameState != data.currentGameState) {
+                    previousGameState = currentGameState;
+                    currentGameState = data.currentGameState;
+                    addStatusText("Current Game State: " + currentGameState);
+                }
+                timer = data.timer;
+                lasterrcount = 0;
+                console.log("GS=" + currentGameState + " Timer=" + timer);
+            }).fail(function(data, status, xqr) {
+                lasterrcount++;
+                console.log("Ping error #" + lasterrcount + " status="+status);
+
+                if (lasterrcount > 4) {
+                    agentid = undefined;
+                }
+            });
+        } else {
+            addStatusText("Connecting to http://localhost:3000/agents/ ...");
+            $.ajax('http://localhost:3000/agents/', {
+                method: "POST",
+                data: {},
+                timeout: 900
+            }).done(function(data, status, xqr) {
+                agentid = data.id;
+                addStatusText("Connected as Agent ID " + agentid);
+            }).fail(function(data, status, xqr) {
+                addStatusText("Connection Failed: " + status);
+            });
+        }
+    }
+
+    setInterval(connectTest, 1000);
+    setInterval(finishedTest, 1000);
+    setInterval(runningTest, 1000);
+    setInterval(disconnectedTest, 1000);
+
+</script>
+</body>
+</html>
