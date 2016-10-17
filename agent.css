@@ -21,13 +21,15 @@ html, body {
 }
 #queue {
     width: 25%;
+    height: 50%;
     float: left;
 }
 #room {
     width: 25%;
+    height: 50%;
     float: left;
 }
-#status {
+#statusarea {
     width: 75%;
     height: 100%;
     float: left;

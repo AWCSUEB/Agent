@@ -71,6 +71,60 @@ function queueList(length) {
     return list;
 }
 
+function adjList() {
+    var adj = {};
+
+    for (var l in lines) {
+        if (lines[l].hold) {
+            if (!adj[l[0]]) {
+                adj[l[0]] = [];
+            }
+
+            if (!adj[l[1]]) {
+                adj[l[1]] = [];
+            }
+
+            adj[l[0]].push(l[1]);
+            adj[l[1]].push(l[0]);
+        }
+    }
+
+    return adj;
+}
+
+function pathExists() {
+    var visited = [];
+    var path = [];
+    var adj = adjList();
+    var cost = 0;
+    var result = false;
+
+    if (context) {
+        result = search(context.c1, context.c2, visited, path, adj);
+    }
+
+    return result;
+    /*if (result) {
+     var totalCost;
+     var p1 = path[0];
+     var p2;
+     for (int i=0; i<path.length; i++) {
+     p2 = path[i];
+     if (p1 > p2) {
+     cost += lines[p1 + p2].cost;
+     } else {
+     cost += lines[p2 + p1].cost;
+     }
+     }
+
+     // add discount/bonus for path length here?
+
+     return cost;
+     } else {
+     return 0;
+     }*/
+}
+
 function search(n1, n2, visited, path, adj) {
     visited.push(n1);
 
@@ -79,7 +133,7 @@ function search(n1, n2, visited, path, adj) {
         return true;
     }
 
-    nbr = adj[n1];
+    var nbr = adj[n1];
     for (var n in nbr) {
         if ($.inArray(nbr[n], visited) >= 0) {
             continue;

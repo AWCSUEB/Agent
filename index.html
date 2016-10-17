@@ -10,12 +10,21 @@
 <body>
 <div id="top">
     <div id="map"></div>
-    <div id="queue" class="table"></div>
-    <div id="room" class="table">Players</div>
+    <div id="queue"><div id="subqueue" class="table"></div></div>
+    <div id="room"><div id="subroom" class="table"></div></div>
 </div>
 <div id="bottom">
-    <div id="status"><textarea id="statustext"></textarea></div>
+    <div id="statusarea"><textarea id="statustext"></textarea></div>
     <div id="buttons" class="table">
+        <div class="row">
+            <div class="cell">Name: <span id="name"></span></div>
+        </div>
+        <div class="row">
+            <div class="cell">Status: <span id="status"></span></div>
+        </div>
+        <div class="row">
+            <div class="cell">Time Left: <span id="timeLeft"></span></div>
+        </div>
         <div class="row">
             <div class="cell">Route Found: <span id="foundRoute">No</span></div>
         </div>
@@ -24,9 +33,9 @@
         </div>
         <div class="row">
             <div class="cell">
-                <input id="ready" type="button" value="Ready" disabled><br/>
-                <input id="confirm" type="button" value="Confirm" disabled><br/>
-                <input id="refresh" type="button" value="Refresh" disabled><br/>
+                <input id="ready" type="button" value="Ready" disabled>
+                <input id="confirm" type="button" value="Confirm" disabled>
+                <input id="refresh" type="button" value="Refresh" disabled>
             </div>
         </div>
     </div>
@@ -169,7 +178,7 @@
         });
     }
 
-    function clearLines() {
+    function clearLinesAndLabels() {
         var i;
 
         for (i in labels) {
@@ -187,145 +196,16 @@
         clearHolds();
         if (!c1 || !c2 || currentGameState != "Running") {
             context = undefined;
+            $("#ready").removeAttr("disabled");
+            $("#refresh").attr("disabled", "disabled");
         } else {
             context = {"c1": c1, "c2": c2};
             markers[c1].setAnimation(google.maps.Animation.BOUNCE);
             markers[c2].setAnimation(google.maps.Animation.BOUNCE);
         }
-    }
-
-    function adjList() {
-        var adj = {};
-
-        for (var l in lines) {
-            if (lines[l].hold) {
-                if (!adj[l[0]]) {
-                    adj[l[0]] = [];
-                }
-
-                if (!adj[l[1]]) {
-                    adj[l[1]] = [];
-                }
-
-                adj[l[0]].push(l[1]);
-                adj[l[1]].push(l[0]);
-            }
-        }
-
-        return adj;
-    }
-
-    function pathExists() {
-        var visited = [];
-        var path = [];
-        var adj = adjList();
-        var cost = 0;
-        var result = false;
-
-        if (context.c1 && context.c2) {
-            result = search(context.c1, context.c2, visited, path, adj);
-        }
-
-        return result;
-        /*if (result) {
-            var totalCost;
-            var p1 = path[0];
-            var p2;
-            for (int i=0; i<path.length; i++) {
-                p2 = path[i];
-                if (p1 > p2) {
-                    cost += lines[p1 + p2].cost;
-                } else {
-                    cost += lines[p2 + p1].cost;
-                }
-            }
-
-            // add discount/bonus for path length here?
-
-            return cost;
-        } else {
-            return 0;
-        }*/
-    }
-
-    function reset() {
-        clearLines();
-        initMap();
-        markers = [];
-        agentid = undefined;
-        lasterrcount = 0;
-        currentGameState = "Unknown";
-    }
-
-    function refresh() {
-        if (currentGameState != "Running") {
-            return;
-        }
-
         $("#foundRoute").text("No");
         $("#routeCost").text("$0");
         $("#confirm").attr("disabled", "disabled");
-
-        $.ajax('http://localhost:3000/agents/', {
-            method: "GET",
-            data: {}
-        }).done(function(data, status, xqr) {
-
-        });
-
-        $.ajax('http://localhost:3000/customers/', {
-            method: "GET",
-            data: {}
-        }).done(function(data, status, xqr) {
-            $("#queue").empty();
-
-            $("#queue").append("<div class='row'>");
-            $("#queue").append("<div class='cell'>Route</div>");
-            $("#queue").append("<div class='cell'>Your Route</div>");
-            $("#queue").append("<div class='cell'>Best Route</div>");
-            $("#queue").append("</div>");
-
-            for (var i in data) {
-                $("#queue").append("<div class='row'>");
-                $("#queue").append("<div class='cell' onclick='setContext(\"" + i[0] + "\", \"" + i[1] + "\")'><a href='#" + i + "'>" + i[0] + " to " + i[1] + "</a></div>");
-                $("#queue").append("<div class='cell'>$0</div>");
-                $("#queue").append("<div class='cell'>$0</div>");
-                $("#queue").append("</div>");
-            }
-        });
-
-        $.ajax('http://localhost:3000/routes/', {
-            method: "GET",
-            data: {}
-        }).done(function(data, status, xqr) {
-            clearLines();
-            var step = 0;
-
-            for (var i in data) {
-                addLine(i, data[i][0], function (label, val) {
-                    return function () {
-                        if (label.line.hold) {
-                            label.line.hold = false;
-                            label.line.setOptions({strokeColor: label.line.origColor});
-                            label.setOptions({fontColor: label.origColor});
-                        } else {
-                            label.line.hold = true;
-                            label.line.setOptions({strokeColor: "#FFFFFF"});
-                            label.setOptions({fontColor: "#000000"});
-                        }
-
-                        if (pathExists()) {
-                            $("#foundRoute").text("Yes");
-                            $("#confirm").removeAttr("disabled");
-                        } else {
-                            $("#foundRoute").text("No");
-                            $("#confirm").attr("disabled", "disabled");
-                        }
-                    };
-                }, {color: rainbow(listsize, step), weight: 5});
-                step = step + 1;
-            }
-        });
     }
 </script>
 <script src="agent.js"></script>
@@ -341,8 +221,9 @@
     var previousGameState = "Unknown";
     var currentGameState = "Unknown";
     var timer = 0;
+    var name = undefined;
 
-    function addStatusText(text) {
+    function addStatusAreaText(text) {
         $("#statustext").val(function(i, val) {
             console.log(text);
             return val + text + "\n";
@@ -357,12 +238,15 @@
     });
 
     $("#ready").click(function(e) {
-        if (agentid) {
+        if (agentid && currentGameState == "NotReady") {
+            $("#ready").attr("disabled", "disabled");
             $.ajax('http://localhost:3000/agents/' + agentid + '/ready', {
                 method: "PUT",
                 data: {}
             }).done(function (data, status, xqr) {
                 console.log("Agent Ready");
+            }).fail(function (data, status, xqr) {
+                $("#ready").removeAttr("disabled");
             });
         }
     });
@@ -371,6 +255,118 @@
         refresh();
     });
 
+    function refresh() {
+        if (currentGameState != "Running") {
+            return;
+        }
+
+        $("#foundRoute").text("No");
+        $("#routeCost").text("$0");
+        $("#confirm").attr("disabled", "disabled");
+
+        $.ajax('http://localhost:3000/agents/', {
+            method: "GET",
+            data: {}
+        }).done(function(data, status, xqr) {
+            updateAgents(data);
+        });
+
+        $.ajax('http://localhost:3000/customers/', {
+            method: "GET",
+            data: {}
+        }).done(function(data, status, xqr) {
+            updateQueue(data);
+        });
+
+        $.ajax('http://localhost:3000/routes/', {
+            method: "GET",
+            data: {}
+        }).done(function(data, status, xqr) {
+            updateRoutes(data);
+        });
+    }
+
+    function updateQueue(customers) {
+        var q = $("#subqueue");
+        var row;
+
+        q.empty();
+
+        row = $("<div class='row'></div>");
+        row.append("<div class='cell'>Route</div>");
+        row.append("<div class='cell'>Your Route</div>");
+        row.append("<div class='cell'>Best Route</div>");
+        q.append(row);
+
+        for (var i in customers) {
+            row = $("<div class='row'></div>");
+            row.append("<div class='cell' onclick='setContext(\"" + i[0] + "\", \"" + i[1] + "\")'><a href='#" + i + "'>" + i[0] + " to " + i[1] + "</a></div>");
+            row.append("<div class='cell'>$0</div>");
+            row.append("<div class='cell'>$0</div>");
+            q.append(row);
+        }
+    }
+
+    function updateAgents(agents) {
+        var r = $("#subroom");
+        var row;
+
+        r.empty();
+
+        row = $("<div class='row'>");
+        row.append("<div class='cell'>Agent (ID)</div>");
+        row.append("<div class='cell'>Active/Ready/Playing</div>");
+        row.append("<div class='cell'>Commission</div>");
+        row.append("</div>");
+        r.append(row);
+
+        for (var i in agents) {
+            row = $("<div class='row'>");
+            row.append("<div class='cell'>" + agents[i].name + " (" + i + ")" + "</div>");
+            row.append("<div class='cell'>" + agents[i].active + "/" + agents[i].ready + "/" + agents[i].playing + "</div>");
+            row.append("<div class='cell'>$" + agents[i].commission + "</div>");
+            row.append("</div>");
+            r.append(row);
+        }
+    }
+
+    function updateRoutes(routes) {
+        clearLinesAndLabels();
+        var step = 0;
+
+        for (var i in routes) {
+            addLine(i, routes[i][0], function (label, val) {
+                return function () {
+                    if (label.line.hold) {
+                        label.line.hold = false;
+                        label.line.setOptions({strokeColor: label.line.origColor});
+                        label.setOptions({fontColor: label.origColor});
+                    } else {
+                        label.line.hold = true;
+                        label.line.setOptions({strokeColor: "#FFFFFF"});
+                        label.setOptions({fontColor: "#000000"});
+                    }
+
+                    if (pathExists()) {
+                        $("#foundRoute").text("Yes");
+                        $("#routeCost").text("$???");
+                        $("#confirm").removeAttr("disabled");
+                    } else {
+                        $("#foundRoute").text("No");
+                        $("#routeCost").text("$0");
+                        $("#confirm").attr("disabled", "disabled");
+                    }
+                };
+            }, {color: rainbow(listsize, step), weight: 5});
+            step = step + 1;
+        }
+    }
+
+    function setTimer(time) {
+        timer = time;
+        $("#timeLeft").text(timer);
+    }
+
     function finishedTest() {
        if (currentGameState != "NotReady") {
            return;
@@ -378,9 +374,6 @@
 
        if (currentGameState != previousGameState) {
            setContext(null, null);
-           $("#ready").removeAttr("disabled");
-           $("#confirm").attr("disabled", "disabled");
-           $("#refresh").attr("disabled", "disabled");
        }
     }
 
@@ -420,9 +413,12 @@
                 if (currentGameState != data.currentGameState) {
                     previousGameState = currentGameState;
                     currentGameState = data.currentGameState;
-                    addStatusText("Current Game State: " + currentGameState);
+                    addStatusAreaText("Current Game State: " + currentGameState);
+                    $("#status").text(currentGameState);
                 }
-                timer = data.timer;
+                updateQueue(data.customers);
+                updateAgents(data.agents);
+                setTimer(data.timer);
                 lasterrcount = 0;
                 console.log("GS=" + currentGameState + " Timer=" + timer);
             }).fail(function(data, status, xqr) {
@@ -434,25 +430,45 @@
                 }
             });
         } else {
-            addStatusText("Connecting to http://localhost:3000/agents/ ...");
+            reset();
+            addStatusAreaText("Connecting to http://localhost:3000/ ...");
             $.ajax('http://localhost:3000/agents/', {
                 method: "POST",
-                data: {},
+                data: {
+                    name: name
+                },
                 timeout: 900
             }).done(function(data, status, xqr) {
                 agentid = data.id;
-                addStatusText("Connected as Agent ID " + agentid);
+                name = data.name;
+                $("#name").text(name + " (" + agentid + ")");
+                addStatusAreaText("Connected as " + name + " (" + agentid + ")");
             }).fail(function(data, status, xqr) {
-                addStatusText("Connection Failed: " + status);
+                addStatusAreaText("Connection Failed: " + status);
             });
         }
     }
+
+    name = prompt("Agent Name");
 
     setInterval(connectTest, 1000);
     setInterval(finishedTest, 1000);
     setInterval(runningTest, 1000);
     setInterval(disconnectedTest, 1000);
 
+    function reset() {
+        clearLinesAndLabels();
+        context = undefined;
+        agentid = undefined;
+        lasterrcount = 0;
+        previousGameState = "Unknown";
+        currentGameState = "Unknown";
+        $("#name").text("");
+        $("#status").text(currentGameState);
+        $("#foundRoute").text("No");
+        $("#routeCost").text("$0");
+        $("#confirm").attr("disabled", "disabled");
+    }
 </script>
 </body>
 </html>
