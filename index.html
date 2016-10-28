@@ -221,6 +221,7 @@
     var previousGameState = "Unknown";
     var currentGameState = "Unknown";
     var timer = 0;
+    var host = undefined;
     var name = undefined;
 
     function addStatusAreaText(text) {
@@ -240,7 +241,7 @@
     $("#ready").click(function(e) {
         if (agentid && currentGameState == "NotReady") {
             $("#ready").attr("disabled", "disabled");
-            $.ajax('http://localhost:3000/agents/' + agentid + '/ready', {
+            $.ajax('http://' + host + ':3000/agents/' + agentid + '/ready', {
                 method: "PUT",
                 data: {}
             }).done(function (data, status, xqr) {
@@ -264,21 +265,21 @@
         $("#routeCost").text("$0");
         $("#confirm").attr("disabled", "disabled");
 
-        $.ajax('http://localhost:3000/agents/', {
+        $.ajax('http://' + host + ':3000/agents/', {
             method: "GET",
             data: {}
         }).done(function(data, status, xqr) {
             updateAgents(data);
         });
 
-        $.ajax('http://localhost:3000/customers/', {
+        $.ajax('http://' + host + ':3000/customers/', {
             method: "GET",
             data: {}
         }).done(function(data, status, xqr) {
             updateQueue(data);
         });
 
-        $.ajax('http://localhost:3000/routes/', {
+        $.ajax('http://' + host + ':3000/routes/', {
             method: "GET",
             data: {}
         }).done(function(data, status, xqr) {
@@ -405,7 +406,7 @@
 
     function connectTest() {
         if (agentid) {
-            $.ajax('http://localhost:3000/agents/' + agentid + '/ping', {
+            $.ajax('http://' + host + ':3000/agents/' + agentid + '/ping', {
                 method: "PUT",
                 data: {},
                 timeout: 900
@@ -421,6 +422,7 @@
                 setTimer(data.timer);
                 lasterrcount = 0;
                 console.log("GS=" + currentGameState + " Timer=" + timer);
+                setTimeout(connectTest, 1000);
             }).fail(function(data, status, xqr) {
                 lasterrcount++;
                 console.log("Ping error #" + lasterrcount + " status="+status);
@@ -428,11 +430,12 @@
                 if (lasterrcount > 4) {
                     agentid = undefined;
                 }
+                setTimeout(connectTest, 1000);
             });
         } else {
             reset();
-            addStatusAreaText("Connecting to http://localhost:3000/ ...");
-            $.ajax('http://localhost:3000/agents/', {
+            addStatusAreaText("Connecting to http://" + host + ":3000/ ...");
+            $.ajax('http://' + host + ':3000/agents/', {
                 method: "POST",
                 data: {
                     name: name
@@ -443,15 +446,22 @@
                 name = data.name;
                 $("#name").text(name + " (" + agentid + ")");
                 addStatusAreaText("Connected as " + name + " (" + agentid + ")");
+                setTimeout(connectTest, 1000);
             }).fail(function(data, status, xqr) {
                 addStatusAreaText("Connection Failed: " + status);
+                setTimeout(connectTest, 1000);
             });
         }
     }
 
+    host = prompt("Server Hostname");
     name = prompt("Agent Name");
 
-    setInterval(connectTest, 1000);
+    if (!host || host == "") {
+        host = "localhost";
+    }
+
+    setTimeout(connectTest, 1000);
     setInterval(finishedTest, 1000);
     setInterval(runningTest, 1000);
     setInterval(disconnectedTest, 1000);
