@@ -35,7 +35,7 @@
             <div class="cell">Route Found: <span id="foundRoute">No</span></div>
         </div>
         <div class="row">
-            <div class="cell">Route Cost: <span id="currentCost">$0</span></div>
+            <div class="cell">Route Cost: <span id="routeCost">$0</span></div>
         </div>
         <div class="row">
             <div class="cell">
@@ -201,9 +201,7 @@
         clearMarkerAnimations([c1, c2]);
         clearHolds();
         if (!c1 || !c2 || currentGameState != "Running") {
-            context = undefined;
-            $("#ready").removeAttr("disabled");
-            $("#refresh").attr("disabled", "disabled");
+            reset();
         } else {
             context = {"c1": c1, "c2": c2};
             markers[c1].setAnimation(google.maps.Animation.BOUNCE);
@@ -383,9 +381,10 @@
                         label.setOptions({fontColor: "#000000"});
                     }
 
-                    if (pathExists()) {
+                    var path = pathExists(true); // strict single path lookup
+                    if (path.length > 0) {
                         $("#foundRoute").text("Yes");
-                        $("#routeCost").text("$???");
+                        $("#routeCost").text("$" + pathCost(path));
                         $("#confirm").removeAttr("disabled");
                     } else {
                         $("#foundRoute").text("No");
@@ -519,7 +518,9 @@
         $("#status").text(currentGameState);
         $("#foundRoute").text("No");
         $("#routeCost").text("$0");
+        $("#ready").removeAttr("disabled");
         $("#confirm").attr("disabled", "disabled");
+        $("#refresh").attr("disabled", "disabled");
     }
 </script>
 </body>

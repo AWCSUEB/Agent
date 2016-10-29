@@ -92,37 +92,55 @@ function adjList() {
     return adj;
 }
 
-function pathExists() {
+function pathCost(path) {
+    var cost = 0;
+    var p1 = path[0];
+    var p2;
+    for (var i=1; i<path.length; i++) {
+        p2 = path[i];
+        if (p1 < p2) {
+            cost += labels[p1 + p2].route.cost;
+        } else {
+            cost += labels[p2 + p1].route.cost;
+        }
+        p1 = p2;
+    }
+
+    return cost;
+}
+
+function pathExists(strict) {
     var visited = [];
     var path = [];
     var adj = adjList();
     var cost = 0;
-    var result = false;
+    var result = [];
+
+    var linesheld = 0;
+
+    for (var l in lines) {
+        if (lines[l].hold) {
+            linesheld++;
+        }
+    }
 
     if (context) {
-        result = search(context.c1, context.c2, visited, path, adj);
+        if (search(context.c1, context.c2, visited, path, adj)) {
+            // strict means only return a result if there is a single path (no extraneous lines)
+            // non strict means more than one path, return first one found
+            if (strict) {
+                if ((path.length - 1) == linesheld) {
+                    result = path;
+                } else {
+                    result = [];
+                }
+            } else {
+                result = path;
+            }
+        }
     }
 
     return result;
-    /*if (result) {
-     var totalCost;
-     var p1 = path[0];
-     var p2;
-     for (int i=0; i<path.length; i++) {
-     p2 = path[i];
-     if (p1 > p2) {
-     cost += lines[p1 + p2].cost;
-     } else {
-     cost += lines[p2 + p1].cost;
-     }
-     }
-
-     // add discount/bonus for path length here?
-
-     return cost;
-     } else {
-     return 0;
-     }*/
 }
 
 function search(n1, n2, visited, path, adj) {
