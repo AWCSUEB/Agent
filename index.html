@@ -5,13 +5,19 @@
     <meta name="viewport" content="initial-scale=1.0">
     <meta charset="utf-8">
     <link rel="stylesheet" href="agent.css">
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script src="http://code.jquery.com/jquery-3.1.1.min.js"></script>
 </head>
 <body>
+<div id="loading-div" class="ui-corner-all">
+    <img style="margin:30px;" src="loading.gif">
+    <h2 style="color:white;font-weight:normal;">SP Disconnected, Please Wait...</h2>
+</div>
 <div id="top">
     <div id="map"></div>
     <div id="queue"><div id="subqueue" class="table"></div></div>
     <div id="room"><div id="subroom" class="table"></div></div>
+    <div id="splist"><div id="subsplist" class="table"></div></div>
 </div>
 <div id="bottom">
     <div id="statusarea"><textarea id="statustext"></textarea></div>
@@ -212,6 +218,7 @@
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyADALZRj35bv79jiIjJyS_ZneBbDncXiXY&callback=initMap"></script>
 <script src="maplabel.js"></script>
 <script src="rainbow.js"></script>
+<script src="modal.js"></script>
 <script>
     var listsize = 24;
     //var list = queueList(listsize);
@@ -279,6 +286,13 @@
             updateQueue(data);
         });
 
+        $.ajax('http://' + host + ':3000/providers/', {
+            method: "GET",
+            data: {}
+        }).done(function(data, status, xqr) {
+            updateProviders(data);
+        });
+
         $.ajax('http://' + host + ':3000/routes/', {
             method: "GET",
             data: {}
@@ -326,6 +340,27 @@
             row.append("<div class='cell'>" + agents[i].name + " (" + i + ")" + "</div>");
             row.append("<div class='cell'>" + agents[i].active + "/" + agents[i].ready + "/" + agents[i].playing + "</div>");
             row.append("<div class='cell'>$" + agents[i].commission + "</div>");
+            row.append("</div>");
+            r.append(row);
+        }
+    }
+
+    function updateProviders(providers) {
+        var r = $("#subsplist");
+        var row;
+
+        r.empty();
+
+        row = $("<div class='row'>");
+        row.append("<div class='cell'>SP (ID)</div>");
+        row.append("<div class='cell'>Active/Playing</div>");
+        row.append("</div>");
+        r.append(row);
+
+        for (var i in providers) {
+            row = $("<div class='row'>");
+            row.append("<div class='cell'>" + providers[i].name + " (" + i + ")" + "</div>");
+            row.append("<div class='cell'>" + providers[i].active + "/" + providers[i].playing + "</div>");
             row.append("</div>");
             r.append(row);
         }
@@ -416,9 +451,20 @@
                     currentGameState = data.currentGameState;
                     addStatusAreaText("Current Game State: " + currentGameState);
                     $("#status").text(currentGameState);
+                    if (currentGameState == "Disconnected") {
+                        ShowDialog();
+                    } else {
+                        HideDialog();
+                    }
                 }
+
+                if (currentGameState == "NotReady" && previousGameState == "Disconnected") {
+                    reset();
+                }
+
                 updateQueue(data.customers);
                 updateAgents(data.agents);
+                updateProviders(data.providers);
                 setTimer(data.timer);
                 lasterrcount = 0;
                 console.log("GS=" + currentGameState + " Timer=" + timer);
@@ -469,11 +515,7 @@
     function reset() {
         clearLinesAndLabels();
         context = undefined;
-        agentid = undefined;
         lasterrcount = 0;
-        previousGameState = "Unknown";
-        currentGameState = "Unknown";
-        $("#name").text("");
         $("#status").text(currentGameState);
         $("#foundRoute").text("No");
         $("#routeCost").text("$0");
