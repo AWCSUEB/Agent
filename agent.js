@@ -109,6 +109,24 @@ function pathCost(path) {
     return cost;
 }
 
+function pathRoutes(path) {
+    var routes = {};
+
+    var p1 = path[0];
+    var p2;
+    for (var i=1; i<path.length; i++) {
+        p2 = path[i];
+        if (p1 < p2) {
+            routes[p1 + p2] = labels[p1 + p2].route;
+        } else {
+            routes[p2 + p1] = labels[p2 + p1].route;
+        }
+        p1 = p2;
+    }
+
+    return routes;
+}
+
 function pathExists(strict) {
     var visited = [];
     var path = [];
