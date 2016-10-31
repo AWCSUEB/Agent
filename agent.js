@@ -109,7 +109,7 @@ function pathCost(path) {
     return cost;
 }
 
-function pathRoutes(path) {
+function getPathRoutes(path) {
     var routes = {};
 
     var p1 = path[0];

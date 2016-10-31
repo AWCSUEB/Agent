@@ -229,7 +229,7 @@
     var host = undefined;
     var name = undefined;
     var playing = false;
-    var routes = {};
+    var pathRoutes = {};
 
     function addStatusAreaText(text) {
         $("#statustext").val(function(i, val) {
@@ -266,7 +266,7 @@
                 data: {
                     agentid: agentid,
                     customerid: context.c1 + context.c2,
-                    routes: routes
+                    routes: pathRoutes
                 }
            }).done(function (data, status, xqr) {
 
@@ -381,7 +381,7 @@
 
                     var path = pathExists(true); // strict single path lookup
                     if (path.length > 0) {
-                        routes = pathRoutes(path);
+                        pathRoutes = getPathRoutes(path);
                         $("#foundRoute").text("Yes");
                         $("#routeCost").text("$" + pathCost(path));
                         if (playing) {
