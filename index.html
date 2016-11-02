@@ -263,11 +263,13 @@
         if (currentGameState == "Running") {
             $.ajax('http://' + host + ':3000/reservations', {
                 method: "POST",
-                data: {
+                contentType: "application/json",
+                data: JSON.stringify({
                     agentid: agentid,
                     customerid: context.c1 + context.c2,
                     routes: pathRoutes
-                }
+                }),
+                dataType: 'json'
            }).done(function (data, status, xqr) {
 
            }).fail(function (data, status, xqr) {
@@ -476,7 +478,7 @@
                 lasterrcount++;
                 console.log("Ping error #" + lasterrcount + " status="+status);
 
-                if (lasterrcount > 4) {
+                if (lasterrcount > 30) {
                     agentid = undefined;
                 }
                 setTimeout(connectTest, 1000);
