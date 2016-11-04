@@ -230,6 +230,8 @@
     var name = undefined;
     var playing = false;
     var pathRoutes = {};
+    var reservations = {};
+    var lastReservationId = undefined;
 
     function addStatusAreaText(text) {
         $("#statustext").val(function(i, val) {
@@ -270,11 +272,12 @@
                     routes: pathRoutes
                 }),
                 dataType: 'json'
-           }).done(function (data, status, xqr) {
-
-           }).fail(function (data, status, xqr) {
-
-           });
+            }).done(function (data, status, xqr) {
+                reservations[data.id] = "Unknown";
+                lastReservationId = data.id;
+            }).fail(function (data, status, xqr) {
+                addStatusAreaText("Reservation error");
+            });
         }
     });
 
@@ -302,6 +305,10 @@
     function updateQueue(customers) {
         var q = $("#subqueue");
         var row;
+        var bestagentcost = 0;
+        var bestcost = 0;
+        var bestcostagentid = 0;
+        var bestcostreservationid = 0;
 
         q.empty();
 
@@ -312,10 +319,20 @@
         q.append(row);
 
         for (var i in customers) {
+            if (customers[i].bestagentcost[agentid]) {
+                bestagentcost = customers[i].bestagentcost[agentid];
+            } else {
+                bestagentcost = 0;
+            }
+
+            bestcost = customers[i].bestcost;
+            bestcostagentid = customers[i].bestcostagentid;
+            bestcostreservationid = customers[i].bestcostreservationid;
+
             row = $("<div class='row'></div>");
             row.append("<div class='cell' onclick='setContext(\"" + i[0] + "\", \"" + i[1] + "\")'><a href='#" + i + "'>" + i[0] + " to " + i[1] + "</a></div>");
-            row.append("<div class='cell'>$0</div>");
-            row.append("<div class='cell'>$0</div>");
+            row.append("<div class='cell'>$" + bestagentcost + "</div>");
+            row.append("<div class='cell'>$" + bestcost + "</div>");
             q.append(row);
         }
     }
