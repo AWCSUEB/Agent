@@ -306,34 +306,36 @@
     function updateQueue(customers) {
         var q = $("#subqueue");
         var row;
-        var bestagentcost = 0;
-        var bestcost = 0;
-        var bestcostagentid = 0;
-        var bestcostreservationid = 0;
+        var bestagenthopsandcost = {hops: 0, cost: 0};
+        var besthopsandcost = {hops: 0, cost: 0};
+        var besthopsandcostagentid = 0;
+        var besthopsandcostreservationid = 0;
 
         q.empty();
 
         row = $("<div class='row'></div>");
         row.append("<div class='cell'>Route</div>");
-        row.append("<div class='cell'>Your Route</div>");
-        row.append("<div class='cell'>Best Route</div>");
+        row.append("<div class='cell'>Your Hops / Cost</div>");
+        row.append("<div class='cell'>Best Hops / Cost</div>");
         q.append(row);
 
         for (var i in customers) {
-            if (customers[i].bestagentcost[agentid]) {
-                bestagentcost = customers[i].bestagentcost[agentid];
+            if (customers[i].bestagenthopsandcost[agentid]) {
+                bestagenthopsandcost.hops = customers[i].bestagenthopsandcost[agentid].hops;
+                bestagenthopsandcost.cost = customers[i].bestagenthopsandcost[agentid].cost;
             } else {
-                bestagentcost = 0;
+                bestagenthopsandcost = {hops: 0, cost: 0};
             }
 
-            bestcost = customers[i].bestcost;
-            bestcostagentid = customers[i].bestcostagentid;
-            bestcostreservationid = customers[i].bestcostreservationid;
+            besthopsandcost.hops = customers[i].besthopsandcost.hops;
+            besthopsandcost.cost = customers[i].besthopsandcost.cost;
+            besthopsandcostagentid = customers[i].besthopsandcostagentid;
+            besthopsandcostreservationid = customers[i].besthopsandcostreservationid;
 
             row = $("<div class='row'></div>");
             row.append("<div class='cell' onclick='setContext(\"" + i[0] + "\", \"" + i[1] + "\")'><a href='#" + i + "'>" + i[0] + " to " + i[1] + "</a></div>");
-            row.append("<div class='cell'>$" + bestagentcost + "</div>");
-            row.append("<div class='cell'>$" + bestcost + "</div>");
+            row.append("<div class='cell'>" + bestagenthopsandcost.hops + " / $" + bestagenthopsandcost.cost + "</div>");
+            row.append("<div class='cell'>" + besthopsandcost.hops + " / $" + besthopsandcost.cost + "</div>");
             q.append(row);
         }
     }
