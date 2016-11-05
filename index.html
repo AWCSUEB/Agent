@@ -198,8 +198,7 @@
     }
 
     function setContext(c1, c2) {
-        clearMarkerAnimations([c1, c2]);
-        clearHolds();
+        refreshMap([c1, c2]);
         if (!c1 || !c2 || currentGameState != "Running") {
             reset();
         } else {
@@ -275,6 +274,7 @@
             }).done(function (data, status, xqr) {
                 reservations[data.id] = "Unknown";
                 lastReservationId = data.id;
+                refreshMap();
             }).fail(function (data, status, xqr) {
                 addStatusAreaText("Reservation error");
             });
@@ -285,7 +285,7 @@
         refreshMap();
     });
 
-    function refreshMap() {
+    function refreshMap(newContext) {
         if (currentGameState != "Running") {
             return;
         }
@@ -294,11 +294,13 @@
         $("#routeCost").text("$0");
         $("#confirm").attr("disabled", "disabled");
 
+        clearMarkerAnimations(newContext);
+        clearHolds();
+
         $.ajax('http://' + host + ':3000/routes/', {
             method: "GET",
             data: {}
         }).done(function(data, status, xqr) {
-            clearMarkerAnimations();
             updateRoutes(data);
         });
     }
@@ -320,11 +322,14 @@
         q.append(row);
 
         for (var i in customers) {
+            row = $("<div class='row'></div>");
             if (customers[i].bestagenthopsandcost[agentid]) {
                 bestagenthopsandcost.hops = customers[i].bestagenthopsandcost[agentid].hops;
                 bestagenthopsandcost.cost = customers[i].bestagenthopsandcost[agentid].cost;
+                row.append("<div class='cell'>" + i[0] + " to " + i[1] + "</div>");
             } else {
                 bestagenthopsandcost = {hops: 0, cost: 0};
+                row.append("<div class='cell' onclick='setContext(\"" + i[0] + "\", \"" + i[1] + "\")'><a href='#" + i + "'>" + i[0] + " to " + i[1] + "</a></div>");
             }
 
             besthopsandcost.hops = customers[i].besthopsandcost.hops;
@@ -332,8 +337,6 @@
             besthopsandcostagentid = customers[i].besthopsandcostagentid;
             besthopsandcostreservationid = customers[i].besthopsandcostreservationid;
 
-            row = $("<div class='row'></div>");
-            row.append("<div class='cell' onclick='setContext(\"" + i[0] + "\", \"" + i[1] + "\")'><a href='#" + i + "'>" + i[0] + " to " + i[1] + "</a></div>");
             row.append("<div class='cell'>" + bestagenthopsandcost.hops + " / $" + bestagenthopsandcost.cost + "</div>");
             row.append("<div class='cell'>" + besthopsandcost.hops + " / $" + besthopsandcost.cost + "</div>");
             q.append(row);
@@ -433,6 +436,7 @@
 
        if (currentGameState != previousGameState) {
            setContext(null, null);
+           previousGameState = currentGameState;
        }
     }
 
@@ -498,7 +502,7 @@
                 lasterrcount++;
                 console.log("Ping error #" + lasterrcount + " status="+status);
 
-                if (lasterrcount > 30) {
+                if (lasterrcount > 10 && !confirm("Connection Lost.\nOK to attempt session reconnect.\nCancel to reset.")) {
                     agentid = undefined;
                 }
                 setTimeout(connectTest, 1000);
