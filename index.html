@@ -298,6 +298,7 @@
             method: "GET",
             data: {}
         }).done(function(data, status, xqr) {
+            clearMarkerAnimations();
             updateRoutes(data);
         });
     }
@@ -535,6 +536,7 @@
     setInterval(disconnectedTest, 1000);
 
     function reset() {
+        clearMarkerAnimations();
         clearLinesAndLabels();
         context = undefined;
         lasterrcount = 0;
