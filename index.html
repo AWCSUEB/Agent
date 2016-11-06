@@ -35,6 +35,9 @@
             <div class="cell">Route Found: <span id="foundRoute">No</span></div>
         </div>
         <div class="row">
+            <div class="cell">Route Hops: <span id="routeHops">0</span></div>
+        </div>
+        <div class="row">
             <div class="cell">Route Cost: <span id="routeCost">$0</span></div>
         </div>
         <div class="row">
@@ -62,7 +65,7 @@
             disableDoubleClickZoom: true,
             draggable: false,
             keyboardShortcuts: false,
-            scrollwheel: false,
+            //scrollwheel: false,
             mapTypeControl: false,
             styles: styles
         });
@@ -207,6 +210,7 @@
             markers[c2].setAnimation(google.maps.Animation.BOUNCE);
         }
         $("#foundRoute").text("No");
+        $("#routeHops").text("0");
         $("#routeCost").text("$0");
         $("#confirm").attr("disabled", "disabled");
     }
@@ -291,6 +295,7 @@
         }
 
         $("#foundRoute").text("No");
+        $("#routeHops").text("0");
         $("#routeCost").text("$0");
         $("#confirm").attr("disabled", "disabled");
 
@@ -316,21 +321,25 @@
         q.empty();
 
         row = $("<div class='row'></div>");
+        row.append("<div class='cell'>Customer</div>");
+        row.append("<div class='cell'>My</div>");
+        row.append("<div class='cell'>Best</div>");
+        q.append(row);
+
+        row = $("<div class='row'></div>");
         row.append("<div class='cell'>Route</div>");
-        row.append("<div class='cell'>Your Hops / Cost</div>");
-        row.append("<div class='cell'>Best Hops / Cost</div>");
+        row.append("<div class='cell'>Hops / Cost / Attempts</div>");
+        row.append("<div class='cell'>Hops / Cost / Agent ID</div>");
         q.append(row);
 
         for (var i in customers) {
             if (customers[i].bestagenthopsandcost[agentid]) {
-                bestagenthopsandcost.hops = customers[i].bestagenthopsandcost[agentid].hops;
-                bestagenthopsandcost.cost = customers[i].bestagenthopsandcost[agentid].cost;
+                bestagenthopsandcost = customers[i].bestagenthopsandcost[agentid];
             } else {
-                bestagenthopsandcost = {hops: 0, cost: 0};
+                bestagenthopsandcost = {hops: 0, cost: 0, count: 0};
             }
 
-            besthopsandcost.hops = customers[i].besthopsandcost.hops;
-            besthopsandcost.cost = customers[i].besthopsandcost.cost;
+            besthopsandcost = customers[i].besthopsandcost;
             besthopsandcostagentid = customers[i].besthopsandcostagentid;
             besthopsandcostreservationid = customers[i].besthopsandcostreservationid;
 
@@ -340,8 +349,8 @@
             } else {
                 row.append("<div class='cell' onclick='setContext(\"" + i[0] + "\", \"" + i[1] + "\")'><a href='#" + i + "'>" + i[0] + " to " + i[1] + "</a></div>");
             }
-            row.append("<div class='cell'>" + bestagenthopsandcost.hops + " / $" + bestagenthopsandcost.cost + "</div>");
-            row.append("<div class='cell'>" + besthopsandcost.hops + " / $" + besthopsandcost.cost + "</div>");
+            row.append("<div class='cell'>" + bestagenthopsandcost.hops + " / $" + bestagenthopsandcost.cost + " / " + bestagenthopsandcost.count + "</div>");
+            row.append("<div class='cell'>" + besthopsandcost.hops + " / $" + besthopsandcost.cost + " / " + besthopsandcostagentid + "</div>");
             q.append(row);
         }
     }
@@ -363,7 +372,7 @@
             row = $("<div class='row'>");
             row.append("<div class='cell'>" + agents[i].name + " (" + i + ")" + "</div>");
             row.append("<div class='cell'>" + agents[i].active + "/" + agents[i].ready + "/" + agents[i].playing + "</div>");
-            row.append("<div class='cell'>$" + agents[i].commission + "</div>");
+            row.append("<div class='cell'>$" + parseFloat(agents[i].commission).toFixed(2) + "</div>");
             row.append("</div>");
             r.append(row);
         }
@@ -411,6 +420,7 @@
                     if (path.length > 0) {
                         pathRoutes = getPathRoutes(path);
                         $("#foundRoute").text("Yes");
+                        $("#routeHops").text(path.length - 1);
                         $("#routeCost").text("$" + pathCost(path));
                         if (playing) {
                             $("#confirm").removeAttr("disabled");
@@ -418,6 +428,7 @@
                     } else {
                         routes = {};
                         $("#foundRoute").text("No");
+                        $("#routeHops").text("0");
                         $("#routeCost").text("$0");
                         $("#confirm").attr("disabled", "disabled");
                     }
@@ -551,6 +562,7 @@
         lasterrcount = 0;
         $("#status").text(currentGameState);
         $("#foundRoute").text("No");
+        $("#routeHops").text("0");
         $("#routeCost").text("$0");
         $("#ready").removeAttr("disabled");
         $("#confirm").attr("disabled", "disabled");
