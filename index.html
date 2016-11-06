@@ -335,7 +335,11 @@
             besthopsandcostreservationid = customers[i].besthopsandcostreservationid;
 
             row = $("<div class='row'></div>");
-            row.append("<div class='cell' onclick='setContext(\"" + i[0] + "\", \"" + i[1] + "\")'><a href='#" + i + "'>" + i[0] + " to " + i[1] + "</a></div>");
+            if (currentGameState == "NotReady" && previousGameState == "Running") {
+                row.append("<div class='cell'>" + i[0] + " to " + i[1] + "</div>");
+            } else {
+                row.append("<div class='cell' onclick='setContext(\"" + i[0] + "\", \"" + i[1] + "\")'><a href='#" + i + "'>" + i[0] + " to " + i[1] + "</a></div>");
+            }
             row.append("<div class='cell'>" + bestagenthopsandcost.hops + " / $" + bestagenthopsandcost.cost + "</div>");
             row.append("<div class='cell'>" + besthopsandcost.hops + " / $" + besthopsandcost.cost + "</div>");
             q.append(row);
