@@ -253,7 +253,7 @@
     $("#ready").click(function(e) {
         if (agentid && currentGameState == "NotReady") {
             $("#ready").attr("disabled", "disabled");
-            $.ajax('http://' + host + ':3000/agents/' + agentid + '/ready', {
+            $.ajax('http://' + host + '/agents/' + agentid + '/ready', {
                 method: "PUT",
                 data: {}
             }).done(function (data, status, xqr) {
@@ -266,7 +266,7 @@
 
     $("#confirm").click(function(e) {
         if (currentGameState == "Running") {
-            $.ajax('http://' + host + ':3000/reservations', {
+            $.ajax('http://' + host + '/reservations', {
                 method: "POST",
                 contentType: "application/json",
                 data: JSON.stringify({
@@ -302,7 +302,7 @@
         clearMarkerAnimations(newContext);
         clearHolds();
 
-        $.ajax('http://' + host + ':3000/routes/', {
+        $.ajax('http://' + host + '/routes/', {
             method: "GET",
             data: {}
         }).done(function(data, status, xqr) {
@@ -482,7 +482,7 @@
 
     function connectTest() {
         if (agentid) {
-            $.ajax('http://' + host + ':3000/agents/' + agentid + '/ping', {
+            $.ajax('http://' + host + '/agents/' + agentid + '/ping', {
                 method: "PUT",
                 data: {},
                 timeout: 900
@@ -523,8 +523,8 @@
             });
         } else {
             reset();
-            addStatusAreaText("Connecting to http://" + host + ":3000/ ...");
-            $.ajax('http://' + host + ':3000/agents/', {
+            addStatusAreaText("Connecting to http://" + host + "/ ...");
+            $.ajax('http://' + host + '/agents/', {
                 method: "POST",
                 data: {
                     name: name
