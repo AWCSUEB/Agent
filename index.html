@@ -322,14 +322,11 @@
         q.append(row);
 
         for (var i in customers) {
-            row = $("<div class='row'></div>");
             if (customers[i].bestagenthopsandcost[agentid]) {
                 bestagenthopsandcost.hops = customers[i].bestagenthopsandcost[agentid].hops;
                 bestagenthopsandcost.cost = customers[i].bestagenthopsandcost[agentid].cost;
-                row.append("<div class='cell'>" + i[0] + " to " + i[1] + "</div>");
             } else {
                 bestagenthopsandcost = {hops: 0, cost: 0};
-                row.append("<div class='cell' onclick='setContext(\"" + i[0] + "\", \"" + i[1] + "\")'><a href='#" + i + "'>" + i[0] + " to " + i[1] + "</a></div>");
             }
 
             besthopsandcost.hops = customers[i].besthopsandcost.hops;
@@ -337,6 +334,8 @@
             besthopsandcostagentid = customers[i].besthopsandcostagentid;
             besthopsandcostreservationid = customers[i].besthopsandcostreservationid;
 
+            row = $("<div class='row'></div>");
+            row.append("<div class='cell' onclick='setContext(\"" + i[0] + "\", \"" + i[1] + "\")'><a href='#" + i + "'>" + i[0] + " to " + i[1] + "</a></div>");
             row.append("<div class='cell'>" + bestagenthopsandcost.hops + " / $" + bestagenthopsandcost.cost + "</div>");
             row.append("<div class='cell'>" + besthopsandcost.hops + " / $" + besthopsandcost.cost + "</div>");
             q.append(row);
