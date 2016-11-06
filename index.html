@@ -335,7 +335,7 @@
             besthopsandcostreservationid = customers[i].besthopsandcostreservationid;
 
             row = $("<div class='row'></div>");
-            if (currentGameState == "NotReady" && previousGameState == "Running") {
+            if (currentGameState == "NotReady" && previousGameState != currentGameState) {
                 row.append("<div class='cell'>" + i[0] + " to " + i[1] + "</div>");
             } else {
                 row.append("<div class='cell' onclick='setContext(\"" + i[0] + "\", \"" + i[1] + "\")'><a href='#" + i + "'>" + i[0] + " to " + i[1] + "</a></div>");
