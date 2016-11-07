@@ -20,7 +20,10 @@
     <div id="splist"><div id="subsplist" class="table"></div></div>
 </div>
 <div id="bottom">
-    <div id="statusarea"><textarea id="statustext"></textarea></div>
+    <div id="statusarea">
+        <textarea id="statustext"></textarea>
+        <input id="chatbox" type="text"/>
+    </div>
     <div id="buttons" class="table">
         <div class="row">
             <div class="cell">Name: <span id="name"></span></div>
@@ -279,6 +282,24 @@
             }).fail(function (data, status, xqr) {
                 addStatusAreaText("Reservation error");
             });
+        }
+    });
+
+    $("#chatbox").on('keypress', function(e) {
+        if (e.which === 13) {
+            $.ajax('http://' + host + '/agents/' + agentid + '/chat', {
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    message: $(this).val()
+                }),
+                dataType: 'json'
+            }).done(function (data, status, xqr) {
+                $("#chatbox").val("");
+            }).fail(function (data, status, xqr) {
+                addStatusAreaText("Chat error: " + status);
+            });
+
         }
     });
 

@@ -47,8 +47,12 @@ html, body {
 }
 #statustext {
     width: 99%;
-    height: 90%;
-    margin: 5px;
+    height: 80%;
+    margin: 3px;
+}
+#chatbox {
+    width: 99%;
+    margin: 3px;
 }
 .table {
     display: table;
