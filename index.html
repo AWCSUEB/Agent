@@ -530,6 +530,7 @@
                 setTimeout(connectTest, 1000);
             });
         } else {
+            pingId = 1;
             reset();
             addStatusAreaText("Connecting to http://" + host + "/ ...");
             $.ajax('http://' + host + '/agents/', {
@@ -567,7 +568,6 @@
         clearLinesAndLabels();
         context = undefined;
         lasterrcount = 0;
-        pingId = 1;
         $("#status").text(currentGameState);
         $("#foundRoute").text("No");
         $("#routeHops").text("0");
