@@ -233,8 +233,7 @@
     var name = undefined;
     var playing = false;
     var pathRoutes = {};
-    var reservations = {};
-    var lastReservationId = undefined;
+    var pingId = 1;
 
     function addStatusAreaText(text) {
         $("#statustext").val(function(i, val) {
@@ -276,8 +275,6 @@
                 }),
                 dataType: 'json'
             }).done(function (data, status, xqr) {
-                reservations[data.id] = "Unknown";
-                lastReservationId = data.id;
                 refreshMap();
             }).fail(function (data, status, xqr) {
                 addStatusAreaText("Reservation error");
@@ -438,6 +435,12 @@
         }
     }
 
+    function updateLog(messages) {
+        for (var m in messages) {
+            addStatusAreaText(messages[m]);
+        }
+    }
+
     function setTimer(time) {
         timer = time;
         $("#timeLeft").text(timer);
@@ -484,13 +487,17 @@
         if (agentid) {
             $.ajax('http://' + host + '/agents/' + agentid + '/ping', {
                 method: "PUT",
-                data: {},
+                contentType: "application/json",
+                data: JSON.stringify({
+                    "pingId": pingId
+                }),
+                dataType: "json",
                 timeout: 900
             }).done(function(data, status, xqr) {
+                pingId++;
                 if (currentGameState != data.currentGameState) {
                     previousGameState = currentGameState;
                     currentGameState = data.currentGameState;
-                    addStatusAreaText("Current Game State: " + currentGameState);
                     $("#status").text(currentGameState);
                     if (currentGameState == "Disconnected") {
                         ShowDialog();
@@ -508,6 +515,7 @@
                 updateQueue(data.customers);
                 updateAgents(data.agents);
                 updateProviders(data.providers);
+                updateLog(data.messages);
                 setTimer(data.timer);
                 lasterrcount = 0;
                 console.log("GS=" + currentGameState + " Timer=" + timer);
@@ -534,7 +542,6 @@
                 agentid = data.id;
                 name = data.name;
                 $("#name").text(name + " (" + agentid + ")");
-                addStatusAreaText("Connected as " + name + " (" + agentid + ")");
                 setTimeout(connectTest, 1000);
             }).fail(function(data, status, xqr) {
                 addStatusAreaText("Connection Failed: " + status);
@@ -560,6 +567,7 @@
         clearLinesAndLabels();
         context = undefined;
         lasterrcount = 0;
+        pingId = 1;
         $("#status").text(currentGameState);
         $("#foundRoute").text("No");
         $("#routeHops").text("0");
