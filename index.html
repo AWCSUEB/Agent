@@ -50,6 +50,11 @@
                 <input id="refresh" type="button" value="Refresh" disabled>
             </div>
         </div>
+        <div class="row">
+            <div class="cell">
+                <p id="comminfo"></p>
+            </div>
+        </div>
     </div>
 </div>
 <script>
@@ -564,6 +569,8 @@
                 agentid = data.id;
                 name = data.name;
                 $("#name").text(name + " (" + agentid + ")");
+                $("#comminfo").empty();
+                $("#comminfo").append("Route Commission =<br/>" + (data.commissionRatio * 100) + "% of Path Cost - $" + data.penaltyAmount + " Per Extra Attempt");
                 setTimeout(connectTest, 1000);
             }).fail(function(data, status, xqr) {
                 addStatusAreaText("Connection Failed: " + status);
