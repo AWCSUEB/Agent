@@ -66,6 +66,9 @@ html, body {
     margin: 5px;
     text-align: center;
 }
+.bold {
+    font-weight: bold;
+}
 
 /* http://blog.lavgupta.com/2011/12/jquery-modal-waiting-dialog.html */
 #loading-div

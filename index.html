@@ -393,7 +393,11 @@
 
         for (var i in agents) {
             row = $("<div class='row'>");
-            row.append("<div class='cell'>" + agents[i].name + " (" + i + ")" + "</div>");
+            if (i == agentid) {
+                row.append("<div class='cell'>" + agents[i].name + " (" + i + ")" + "</div>");
+            } else {
+                row.append("<div class='cell'>" + agents[i].name + " (" + i + ")" + "</div>");
+            }
             row.append("<div class='cell'>" + agents[i].active + "/" + agents[i].ready + "/" + agents[i].playing + "</div>");
             row.append("<div class='cell'>$" + parseFloat(agents[i].commission).toFixed(2) + "</div>");
             row.append("</div>");
@@ -583,7 +587,15 @@
     name = prompt("Agent Name");
 
     if (!host || host == "") {
-        host = "localhost";
+        if (window.location.href.indexOf("agent-6580.herokuapp.com") !== -1) {
+            host = "rc-6580.herokuapp.com";
+        } else {
+            host = "localhost";
+        }
+    }
+
+    if (!name) {
+        name = ""; // RC will create name from agentid
     }
 
     setTimeout(connectTest, 1000);
