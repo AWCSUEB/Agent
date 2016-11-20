@@ -69,6 +69,18 @@ html, body {
 .bold {
     font-weight: bold;
 }
+.inactive {
+    text-decoration: line-through;
+}
+.not_playing {
+    color: grey;
+}
+.ready {
+    background-color: lime;
+}
+.self {
+    font-weight: bold;
+}
 
 /* http://blog.lavgupta.com/2011/12/jquery-modal-waiting-dialog.html */
 #loading-div

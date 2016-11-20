@@ -391,8 +391,56 @@
         row.append("</div>");
         r.append(row);
 
-        for (var i in agents) {
+        var atemp = Object.keys(agents);
+        if (currentGameState == "NotReady" || currentGameState == "Ready") {
+            atemp.sort(function (a, b) {
+                if (agents[a].ready == true && agents[b].ready == true) {
+                    return agents[b].commission - agents[a].commission;
+                } else if (agents[a].ready == true && agents[b].ready == false) {
+                    return -1;
+                } else if (agents[a].ready == false && agents[b].ready == true) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            });
+        } else {
+            atemp.sort(function (a, b) {
+                if (agents[a].playing == true && agents[b].playing == true) {
+                    return agents[b].commission - agents[a].commission;
+                } else if (agents[a].playing == true && agents[b].playing == false) {
+                    return -1;
+                } else if (agents[a].playing == false && agents[b].playing == true) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            });
+        }
+
+        for (var a in atemp) {
+            var i = atemp[a];
+
             row = $("<div class='row'>");
+
+            if (i == agentid) {
+                $(row).addClass("self");
+            }
+
+            if (!agents[i].active) {
+                $(row).addClass("inactive");
+            }
+
+            if (currentGameState != "NotReady" && currentGameState != "Ready") {
+                if (!agents[i].playing) {
+                    $(row).addClass("not_playing");
+                }
+            } else {
+                if (agents[i].ready) {
+                    $(row).addClass("ready");
+                }
+            }
+
             if (i == agentid) {
                 row.append("<div class='cell'>" + agents[i].name + " (" + i + ")" + "</div>");
             } else {
@@ -419,6 +467,17 @@
 
         for (var i in providers) {
             row = $("<div class='row'>");
+
+            if (!providers[i].active) {
+                $(row).addClass("inactive");
+            }
+
+            if (currentGameState != "NotReady" && currentGameState != "Ready") {
+                if (!providers[i].playing) {
+                    $(row).addClass("not_playing");
+                }
+            }
+
             row.append("<div class='cell'>" + providers[i].name + " (" + i + ")" + "</div>");
             row.append("<div class='cell'>" + providers[i].active + "/" + providers[i].playing + "</div>");
             row.append("</div>");
