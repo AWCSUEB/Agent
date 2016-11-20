@@ -81,6 +81,12 @@ html, body {
 .self {
     font-weight: bold;
 }
+.low_time {
+    color: red;
+}
+.found {
+    background-color: lime;
+}
 
 /* http://blog.lavgupta.com/2011/12/jquery-modal-waiting-dialog.html */
 #loading-div

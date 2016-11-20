@@ -217,7 +217,7 @@
             markers[c1].setAnimation(google.maps.Animation.BOUNCE);
             markers[c2].setAnimation(google.maps.Animation.BOUNCE);
         }
-        $("#foundRoute").text("No");
+        setFoundRoute(false);
         $("#routeHops").text("0");
         $("#routeCost").text("$0");
         $("#confirm").attr("disabled", "disabled");
@@ -317,7 +317,7 @@
             return;
         }
 
-        $("#foundRoute").text("No");
+        setFoundRoute(false);
         $("#routeHops").text("0");
         $("#routeCost").text("$0");
         $("#confirm").attr("disabled", "disabled");
@@ -505,7 +505,7 @@
                     var path = pathExists(true); // strict single path lookup
                     if (path.length > 0) {
                         pathRoutes = getPathRoutes(path);
-                        $("#foundRoute").text("Yes");
+                        setFoundRoute(true);
                         $("#routeHops").text(path.length - 1);
                         $("#routeCost").text("$" + pathCost(path));
                         if (playing) {
@@ -513,7 +513,7 @@
                         }
                     } else {
                         routes = {};
-                        $("#foundRoute").text("No");
+                        setFoundRoute(false);
                         $("#routeHops").text("0");
                         $("#routeCost").text("$0");
                         $("#confirm").attr("disabled", "disabled");
@@ -533,6 +533,22 @@
     function setTimer(time) {
         timer = time;
         $("#timeLeft").text(timer);
+
+        if (time <= 15) {
+            $("#timeLeft").addClass("low_time");
+        } else {
+            $("#timeLeft").removeClass("low_time");
+        }
+    }
+
+    function setFoundRoute(found) {
+        if (found) {
+            $("#foundRoute").text("Yes");
+            $("#foundRoute").addClass("found");
+        } else {
+            $("#foundRoute").text("No");
+            $("#foundRoute").removeClass("found");
+        }
     }
 
     function finishedTest() {
@@ -653,7 +669,7 @@
         }
     }
 
-    if (!name) {
+    if (!name || name == "RC") {
         name = ""; // RC will create name from agentid
     }
 
@@ -668,7 +684,7 @@
         context = undefined;
         lasterrcount = 0;
         $("#status").text(currentGameState);
-        $("#foundRoute").text("No");
+        setFoundRoute(false);
         $("#routeHops").text("0");
         $("#routeCost").text("$0");
         $("#ready").removeAttr("disabled");
