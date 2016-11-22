@@ -658,8 +658,8 @@
         }
     }
 
-    host = prompt("Server Hostname");
-    name = prompt("Agent Name");
+    host = prompt("Server Hostname", "");
+    name = prompt("Agent Name", "");
 
     if (!host || host == "") {
         if (window.location.href.indexOf("agent-6580.herokuapp.com") !== -1) {
